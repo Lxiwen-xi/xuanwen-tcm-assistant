@@ -1,0 +1,13 @@
+.venv/
+.env
+.env.*
+!.env.example
+.idea/
+__pycache__/
+.pytest_cache/
+data/*.db*
+data/*.pid
+data/uploads/
+data/reference_documents/
+*.log
+*.dpapi

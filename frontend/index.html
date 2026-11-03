@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>铉问 · 中医智能问诊助手</title>
+  <link rel="stylesheet" href="/static/style.css?v=tcm-conversation-v3">
+  <script src="/static/app.js?v=tcm-conversation-v3" defer></script>
+</head>
+<body>
+<aside class="sidebar">
+  <a class="brand" href="/" aria-label="铉问首页"><span class="seal">铉</span><span>铉问<small>让问诊信息更清晰</small></span></a>
+  <button id="new-session" class="primary new">＋ 开始新的问诊</button>
+  <nav aria-label="主导航">
+    <button class="nav active" data-tab="chat">问诊工作台<span>01</span></button>
+    <button class="nav" data-tab="history">历史记录<span>02</span></button>
+    <button class="nav" data-tab="knowledge">知识库<span>03</span></button>
+  </nav>
+  <div class="sidebar-note"><span class="leaf">◒</span><p>把情况慢慢说清楚，<br>把依据留在每一次回答里。</p></div>
+  <div class="settings">
+    <label><input id="save-session" type="checkbox"> 保留新会话到本机</label>
+    <label><input id="model-consent" type="checkbox" disabled> 使用 DeepSeek 智能对话（立即生效）</label>
+    <button id="test-model" class="secondary full" type="button">检查 DeepSeek 连接</button>
+    <p id="model-status">请先在项目 .env 填写密钥。</p>
+    <p id="privacy-note">默认临时会话，关闭服务后不保留。模型模式需先配置，并将问题与相关资料发送给供应商。</p>
+  </div>
+  <div class="sidebar-bottom"><span class="dot"></span> 本地开发演示版 <span>v1.0</span></div>
+</aside>
+<main>
+  <header><div class="breadcrumb">铉问 <span>/</span> <span id="page-label">问诊工作台</span></div><span id="mode-badge" class="badge">离线演示 · 无外部调用</span></header>
+  <div class="notice"><strong>使用说明</strong><span>用于就诊前的信息整理与知识查询。文字交流不能完成完整四诊，本工具不提供确诊或处方。</span></div>
+  <section id="tab-chat" class="tab active">
+    <div class="page-heading"><div><span class="eyebrow">TCM CONSULTATION</span><h1>从描述你的情况开始</h1><p>结合中医问诊维度了解情况，让解释有据可查。</p></div><span class="outline-tag">中医文字问诊</span></div>
+    <div id="model-notice" class="knowledge-note" hidden></div>
+    <div class="workspace">
+      <section class="chat-panel" aria-label="问诊对话">
+        <div class="panel-header"><strong>问诊对话</strong><div class="chat-actions"><span id="session-state">尚未开始</span><button id="view-advice" type="button" class="secondary" disabled>查看症状建议</button></div></div>
+        <div id="rag-status" class="retrieval-status" hidden></div>
+        <div id="messages" class="messages" aria-live="polite">
+          <div id="welcome" class="welcome"><div class="welcome-mark">问</div><h2>你好，我是铉问</h2><p>你可以描述主要不适和持续时间，<br>也可以先了解中医问诊的相关知识。</p>
+            <div class="examples"><button data-example="我最近一周每晚入睡困难">试试问诊：描述睡眠情况 <span>↗</span></button><button data-example="什么是中医四诊？">知识查询：什么是中医四诊？ <span>↗</span></button></div>
+            <small>示例仅用于流程演示，不构成医学结论。</small>
+          </div>
+        </div>
+        <form id="chat-form" class="composer"><label class="sr-only" for="message-input">描述情况或输入知识问题</label><textarea id="message-input" maxlength="2000" placeholder="描述你的情况，或输入想了解的中医知识…" rows="2"></textarea><div><span id="composer-tip">Enter 发送 · Shift + Enter 换行</span><button class="primary" id="send-button" type="submit">发送 ↑</button></div></form>
+      </section>
+      <aside class="profile-panel">
+        <div class="panel-header"><strong>问诊信息</strong><span class="tiny">可核对修改</span></div>
+        <div class="profile-body"><p class="muted">围绕寒热、饮食、二便、睡眠等维度整理，只记录已提供的内容。</p><form id="profile-form"><div id="profile-fields"></div><button id="save-profile" class="secondary full" type="submit" disabled>保存核对结果</button></form>
+        <div id="risk-notice" class="risk" hidden></div>
+        <div class="summary-card"><span class="eyebrow">YOUR SUMMARY</span><h3>整理一份就诊摘要</h3><p>汇总描述、时间经过和参考资料，方便就诊时沟通。</p><button id="preview-summary" class="text-button" disabled>预览摘要 →</button><a id="export-summary" class="secondary full disabled" href="#">导出 Markdown 摘要</a></div>
+        <p class="footnote">尚未触发演示规则，也不代表已排除风险。知识整理稿及规则未经临床审核。</p></div>
+      </aside>
+    </div>
+  </section>
+  <section id="tab-history" class="tab"><div class="page-heading"><div><span class="eyebrow">HISTORY</span><h1>历史记录</h1><p>这里仅显示你主动选择保留到本机的会话。</p></div><button class="secondary" id="refresh-history">刷新记录</button></div><div id="history-list" class="record-list"></div></section>
+  <section id="tab-knowledge" class="tab"><div class="page-heading"><div><span class="eyebrow">KNOWLEDGE</span><h1>让回答有据可查</h1><p>管理资料、保留来源，让知识的边界清晰可见。</p></div><button class="secondary" id="reindex">更新检索索引</button></div>
+    <div class="knowledge-note">内置内容是根据官方页面编写的短篇整理稿，未经临床审核。上传资料默认停用，核对来源后可手动纳入演示检索。</div>
+    <div class="knowledge-layout"><div><div class="list-heading"><h2>资料清单</h2><span id="document-count"></span></div><div id="document-list" class="record-list"></div></div>
+    <form id="upload-form" class="upload-card"><span class="eyebrow">ADD DOCUMENT</span><h2>添加资料</h2><label>资料文件<input name="file" type="file" accept=".pdf,.txt,.md" required></label><small>PDF、TXT、Markdown，单份不超过 5 MB。扫描 PDF 需先识别文字。</small><label>资料名称<input name="title" maxlength="120" placeholder="留空则使用文件名"></label><label>来源链接<input name="url" type="url" placeholder="https://…"></label><label>版本说明<input name="version" maxlength="120" value="用户导入 · 未经临床审核"></label><button class="primary full" type="submit">导入资料</button></form></div>
+  </section>
+  <footer>铉问 · 就诊前的信息整理与中医知识查询 <span>本机单用户项目</span></footer>
+</main>
+<div id="toast" role="status" hidden></div>
+<dialog id="detail-dialog"><div class="dialog-top"><h2 id="dialog-title"></h2><button id="close-dialog" class="icon-button" aria-label="关闭">×</button></div><pre id="dialog-content"></pre></dialog>
+</body></html>
